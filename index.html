@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1,  maximum-scale=1, user-scalable=no">
+    <title>chatroom</title>
+    <style type="text/css">
+        *{
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        html{
+            font-size: 14px;
+            font-family: 'Microsoft YaHei', arial;
+        }
+        @media screen and (min-width: 720px){
+            .chat-room{
+                margin: 12vh auto;
+                width: 500px;
+                height:600px;
+                max-width: 100%;
+                box-shadow: 0 0 5px 1px #ccc;
+                border-radius: 5px;
+            }
+        }
+        @media screen and (max-width: 720px){
+            .chat-room{
+                position: fixed;
+                left: 2%;
+                top: 1%;
+                width: 96%;
+                height:96%;
+                max-width: 100%;
+                box-shadow: 0 0 2px 2px #ccc;
+                border-radius: 5px;
+            }
+        }
+        .chat-room .chat-box{
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+        .chat-room .chat-box .title{
+            text-align: center;
+            padding: 5px 0;
+            border-bottom: 1px solid #D9D9D9;
+            color: #555;
+        }
+        .chat-room .msg-content{
+            margin: 0 auto;
+            width: 96%;
+            height: 100%;
+            padding: 5px 5px 60px 5px;
+            overflow: auto;
+        }
+        .chat-room .msg-content>p{
+            margin: 5px 0;
+        }
+        .chat-room .controll-wrap{
+            position: absolute;
+            left: 0;
+            bottom: 10px;
+            width: 100%;
+            height: 50px;
+            /*border-top: 1px solid #d9d9d9;*/
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .chat-room .controll-wrap .ipt{
+            width: 75%;
+            height: 30px;
+            outline: none;
+            border: none;
+            border-bottom: 1px solid #ccc;
+            padding-left: 5px;
+            padding-right: 5px;
+            font-size: 15px;
+        }
+        .chat-room .controll-wrap .btn{
+            display: inline-block;
+            font-size: 15px;
+            cursor: pointer;
+            color: #333;
+            position: relative;
+            border-radius: 3px;
+            padding: 2px 15px;
+        }
+        .chat-room .controll-wrap .send-btn {
+            border-color: #0FB808;
+            background-color: #0FB808;
+            color: #fff;
+            transition: all 0.2s;
+            margin-left: 6px;
+        }
+        .chat-room .controll-wrap .btn:hover{
+            top: 2px;
+            left: 2px;
+            border-radius: 3px;
+        }
+
+        /*设置昵称*/
+        .set-nick-wrap{
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            left: 0;
+            top: 0;
+            background: rgba(255,255,255,0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+        .set-nick-wrap .nick-ipt{
+            outline: none;
+            border: none;
+            border-bottom: 1px solid #555;
+        }
+        .set-nick-wrap .agree{
+            cursor: pointer;
+        }
+        .set-nick-wrap.show{
+            display: flex;
+        }
+
+        /*---状态-------*/
+        .left{
+            float: left;
+        }
+        .status{
+            display: inline-block;
+            font-weight: normal;
+            font-size: 12px;
+        }
+        .status>span {
+            font-size: 14px;
+            color: #999;
+        }
+        .status>small{
+            display: inline-block;
+            font-weight: normal;
+            font-size: 12px;
+            color: #1aad16;
+        }
+    </style>
+</head>
+<body>
+    <section class="chat-room">
+        <div class="chat-box">
+            <h1 class="title">
+                <div class="left status"><small>在线</small></div>
+                ling's chat room
+        </h1>
+            <div class="msg-content" id="res">
+
+            </div>
+            <div class="controll-wrap">
+                <input type="text" placeholder="来一发" class="ipt" id="sendContent">
+                <span class="btn send-btn" id="send-btn">发送</span>
+            </div>
+        </div>
+    </section>
+    <section class="set-nick-wrap show">
+        <input type="text" placeholder="请输入你的昵称" class="nick-ipt">
+        <span class="agree">确定</span>
+    </section>
+
+    <script src="lyin.js"></script>
+<script>
+    var doc = document;
+    var oRes = doc.getElementById("res");
+    var websocket = new WebSocket("ws://localhost:3000/");
+
+    function showMsg(msg) {
+        var msgObj = JSON.parse(msg);
+        console.log("服务器消息：",msgObj)
+        var ndP = doc.createElement("p");
+        switch (msgObj.type){
+            case "enter":
+                ndP.style.color = "blue";
+                break;
+            case "content":
+                ndP.style.color = "#555";
+                break;
+            case "leave":
+                ndP.style.color = "#f43434";
+                break;
+            default:
+                ndP.style.color = "#ccc";
+                break;
+        }
+        ndP.innerHTML = msgObj.data;
+        oRes.appendChild(ndP)
+    }
+
+    websocket.onopen = function () {
+        console.log("websocket open");
+        doc.getElementById("send-btn").onclick = function () {
+           var txt = doc.getElementById("sendContent").value;
+           var msg = {};
+            if(txt){
+
+                msg.type = "MSG";
+                msg.content = txt;
+                websocket.send(JSON.stringify(msg));
+                console.log(txt+"已发送");
+
+                doc.getElementById("sendContent").value = ""
+            }
+        }
+        //监听回车事件
+        doc.getElementById("sendContent").onkeyup = function (e) {
+            var theEvent = e || window.event;
+            var code = theEvent.keyCode || theEvent.which || theEvent.charCode;
+            if (code === 13) {
+                var txt = doc.getElementById("sendContent").value;
+                var msg = {};
+                if(txt){
+                    msg.type = "MSG";
+                    msg.content = txt;
+                    websocket.send(JSON.stringify(msg));
+                    console.log(txt+"已发送");
+
+                    doc.getElementById("sendContent").value = ""
+                }
+            }
+        }
+        //注册用户昵称
+        doc.querySelector(".agree").onclick = function (e) {
+            var msg = {};
+            var nickname = doc.querySelector(".nick-ipt").value;
+            if(nickname){
+                msg.type = "SET_NICKNAME";
+                msg.content = nickname;
+                websocket.send(JSON.stringify(msg));
+                lyin.removeClass(doc.querySelector(".set-nick-wrap"),"show")
+            }
+        }
+    }
+    
+    websocket.onmessage = function (e) {
+        console.log(e.data);
+        showMsg(e.data)
+    }
+
+
+</script>
+</body>
+</html>
