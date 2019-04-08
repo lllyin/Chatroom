@@ -2,15 +2,16 @@
   "name": "websoket-chat-room",
   "version": "1.0.0",
   "description": "websoket简易多人聊天室",
-  "main": "lyin.js",
+  "main": "server.js",
   "dependencies": {
-    "_nodejs-websocket@1.7.1@nodejs-websocket": "^1.7.1",
-    "nodejs-websocket": "^1.7.1"
+    "nodejs-websocket": "^1.7.2"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "serve": "^11.0.0"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "serve": "node server.js",
+    "start": "serve ."
   },
   "author": "lingyi",
   "license": "MIT"
